@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Results Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+        }
+        
+        .nav-btns {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1024px) {
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .best-guess {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .best-guess h2 {
+            color: white;
+            border-bottom-color: rgba(255,255,255,0.3);
+        }
+        
+        .field-group {
+            margin-bottom: 15px;
+        }
+        
+        .field-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .best-guess .field-label {
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .field-value {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            font-size: 1.1rem;
+        }
+        
+        .best-guess .field-value {
+            background: rgba(255,255,255,0.1);
+            border-left-color: white;
+            color: white;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .engine-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .engine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .engine-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .confidence {
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .field-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .field-row:last-child {
+            border-bottom: none;
+        }
+        
+        .field-name {
+            font-weight: 600;
+            color: #7f8c8d;
+            width: 120px;
+        }
+        
+        .field-value-engine {
+            flex: 1;
+            text-align: right;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        
+        .match {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        
+        .mismatch {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+        
+        .raw-text {
+            margin-top: 30px;
+        }
+        
+        .raw-text h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .raw-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .accuracy-chart {
+            margin-top: 30px;
+        }
+        
+        .accuracy-chart h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .chart-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .chart-bar {
+            flex: 1;
+            height: 200px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column-reverse;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            background: linear-gradient(to top, #3498db, #2980b9);
+            transition: height 0.5s ease;
+            position: relative;
+        }
+        
+        .bar-fill::after {
+            content: attr(data-value);
+            position: absolute;
+            top: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .chart-label {
+            text-align: center;
+            width: 25%;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .no-results-icon {
+            font-size: 4rem;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+        }
+        
+        .no-results h2 {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OCR Results Comparison</h1>
+            <div class="nav-btns">
+                <a href="/" class="btn btn-primary">Upload New</a>
+                <a href="/history" class="btn btn-secondary">View History</a>
+                <button class="btn btn-success" onclick="refreshResults()">Refresh</button>
+            </div>
+        </div>
+        
+        <div id="resultsContent">
+            <!-- Results will be loaded here -->
+        </div>
+        
+        <div class="footer">
+            <p>OCR Comparison System &copy; 2024</p>
+        </div>
+    </div>
+    
+    <script>
+        let ocrData = null;
+        
+        // Load results on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadResults();
+        });
+        
+        function loadResults() {
+            // Try to get from sessionStorage first
+            const storedData = sessionStorage.getItem('latestOCRResult');
+            
+            if (storedData) {
+                ocrData = JSON.parse(storedData);
+                renderResults();
+            } else {
+                // Try to get from URL parameter or load latest from API
+                const urlParams = new URLSearchParams(window.location.search);
+                const resultId = urlParams.get('id');
+                
+                if (resultId) {
+                    fetchResultById(resultId);
+                } else {
+                    fetchLatestResult();
+                }
+            }
+        }
+        
+        async function fetchResultById(resultId) {
+            try {
+                const response = await fetch(`/api/results/${resultId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    ocrData = result.data;
+                    renderResults();
+                } else {
+                    showNoResults();
+                }
+            } catch (error) {
+                console.error('Error fetching result:', error);
+                showNoResults();
+            }
+        }
+        
+        async function fetchLatestResult() {
+            try {
+                const response = await fetch('/api/results');
+                const result = await response.json();
+                
+                if (response.ok && result.data.length > 0) {
+                    // Get the latest result
+                    ocrData = result.data[0];
+                    renderResults();
+                } else {
+                    showNoResults();
+                }
+            } catch (error) {
+                console.error('Error fetching latest result:', error);
+                showNoResults();
+            }
+        }
+        
+        function renderResults() {
+            if (!ocrData) {
+                showNoResults();
+                return;
+            }
+            
+            const resultsContent = document.getElementById('resultsContent');
+            
+            // Create HTML for results
+            let html = `
+                <div class="results-container">
+                    <div class="card best-guess">
+                        <h2>Best Guess (Voting Algorithm)</h2>
+            `;
+            
+            // Add best guess fields
+            for (const [field, value] of Object.entries(ocrData.best_guess)) {
+                html += `
+                    <div class="field-group">
+                        <span class="field-label">${field}:</span>
+                        <div class="field-value">${value || 'Not Found'}</div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Accuracy Comparison</h2>
+                        <div class="accuracy-chart">
+                            <div class="chart-container">
+            `;
+            
+            // Add accuracy chart
+            const engines = Object.keys(ocrData.confidence_scores || {});
+            engines.forEach(engine => {
+                const confidence = (ocrData.confidence_scores[engine] * 100).toFixed(1);
+                html += `
+                    <div class="chart-bar">
+                        <div class="bar-fill" data-value="${confidence}%" style="height: ${confidence}%"></div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                            </div>
+                            <div class="chart-labels">
+            `;
+            
+            engines.forEach(engine => {
+                html += `<div class="chart-label">${engine.replace('_', ' ').toUpperCase()}</div>`;
+            });
+            
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>Engine Comparison</h2>
+                    <div class="comparison-grid">
+            `;
+            
+            // Add engine comparison cards
+            for (const [engine, results] of Object.entries(ocrData.results_by_engine)) {
+                const confidence = ((ocrData.confidence_scores && ocrData.confidence_scores[engine]) * 100 || 0).toFixed(1);
+                
+                html += `
+                    <div class="engine-card">
+                        <div class="engine-header">
+                            <div class="engine-name">${engine.replace('_', ' ').toUpperCase()}</div>
+                            <div class="confidence">${confidence}%</div>
+                        </div>
+                `;
+                
+                // Add fields for this engine
+                for (const [field, value] of Object.entries(results)) {
+                    const bestValue = ocrData.best_guess[field];
+                    const matchClass = value === bestValue ? 'match' : 'mismatch';
+                    
+                    html += `
+                        <div class="field-row">
+                            <span class="field-name">${field}:</span>
+                            <span class="field-value-engine ${matchClass}">${value || 'Not Found'}</span>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    </div>
+                `;
+            }
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div class="card raw-text">
+                    <h2>Raw OCR Output Samples</h2>
+                    <div class="comparison-grid">
+            `;
+            
+            // Add raw text samples
+            if (ocrData.raw_text_samples) {
+                for (const [engine, text] of Object.entries(ocrData.raw_text_samples)) {
+                    html += `
+                        <div class="engine-card">
+                            <h3 style="margin-bottom: 15px;">${engine.replace('_', ' ').toUpperCase()}</h3>
+                            <div class="raw-content">${text}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            resultsContent.innerHTML = html;
+            
+            // Add metadata info
+            const metadata = document.createElement('div');
+            metadata.className = 'card';
+            metadata.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>File:</strong> ${ocrData.filename}<br>
+                        <strong>Processed:</strong> ${new Date(ocrData.upload_date).toLocaleString()}
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="downloadResults()">Download Results</button>
+                    </div>
+                </div>
+            `;
+            
+            resultsContent.insertBefore(metadata, resultsContent.firstChild);
+        }
+        
+        function showNoResults() {
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">📄</div>
+                    <h2>No OCR Results Found</h2>
+                    <p>Upload an ID card image to compare OCR engine results.</p>
+                    <a href="/" class="btn btn-primary" style="margin-top: 20px;">Upload Image</a>
+                </div>
+            `;
+        }
+        
+        function refreshResults() {
+            // Clear session storage and reload
+            sessionStorage.removeItem('latestOCRResult');
+            loadResults();
+        }
+        
+        function downloadResults() {
+            if (!ocrData) return;
+            
+            const dataStr = JSON.stringify(ocrData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `ocr_results_${ocrData.id}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+    </script>
+</body>
+</html>
